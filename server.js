@@ -4,7 +4,7 @@ const path = require('path');
 const app = express();
 const servidor = require('http').createServer(app);
 const { Server } = require('socket.io');
-const io = new Server(servidor);
+const io = new Server(servidor, { cors: { origin: '*' } });
 const ARQ = path.join(__dirname, 'dados.json');
 const CHAVES = ['cafezinho', 'palmaresQuest'];
 
@@ -24,6 +24,16 @@ function gravar() { // grava no máximo 1x por segundo
 }
 const limpa = (e) => String(e || '').trim().toLowerCase();
 const valido = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length < 120;
+
+// libera o acesso vindo do site no Netlify
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+app.get('/api/ping', (req, res) => res.send('ok')); // serve para acordar o servidor
 
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
